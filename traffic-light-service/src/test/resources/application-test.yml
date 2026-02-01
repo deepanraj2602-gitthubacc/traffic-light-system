@@ -1,0 +1,51 @@
+app:
+  service:
+    name: '@project.artifactId@'
+  database:
+    host: 127.0.0.1
+    port: 3306
+
+spring:
+  datasource:
+    name: ${app.service.name}-test
+    schema-name: ${app.service.name}-test
+    parameters: allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true
+    url: jdbc:mysql://${app.database.host}:${app.database.port}/${spring.datasource.name}?currentSchema=${spring.datasource.schema-name}&${spring.datasource.parameters}
+    username: admin
+    password: admin
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: true
+    locations: classpath:db/migration
+    schemas: ${app.service.name}-test
+    encoding: UTF-8
+    connectRetries: 3
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: true
+    show-sql: true
+    properties:
+      hibernate.ddl-auto: none
+      hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+      hibernate.id.new_generator_mappings: false
+      hibernate.connection.autocommit: false
+      hibernate.cache.use_second_level_cache: false
+      hibernate.cache.use_query_cache: false
+      hibernate.generate_statistics: false
+      hibernate.temp.use_jdbc_metadata_defaults: false
+      hibernate:
+        format_sql: true
+        naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        show_sql: true
+        query:
+          substitutions: true
+  test:
+    database:
+      replace: none
+
+logging:
+  level:
+    root: info
