@@ -28,7 +28,7 @@ spring:
     show-sql: true
     properties:
       hibernate.ddl-auto: none
-      hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+      hibernate.dialect: org.hibernate.dialect.MySQLDialect
       hibernate.id.new_generator_mappings: false
       hibernate.connection.autocommit: false
       hibernate.cache.use_second_level_cache: false
