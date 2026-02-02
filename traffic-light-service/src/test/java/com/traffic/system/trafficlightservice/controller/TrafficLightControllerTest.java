@@ -37,7 +37,7 @@ public class TrafficLightControllerTest {
     @MockitoBean
     private TrafficLightService trafficLightService;
 
-    private static final String BASE_API_URL = "/api/v1/intersections/";
+    private static final String BASE_API_URL = "/v1/intersections/";
     private static final String INTERSECTION_TEST_NAME = "MAIN-ROAD-INTSEC-1";
     private static final String BASE_API_URL_WITH_INTERSECTION = BASE_API_URL + INTERSECTION_TEST_NAME;
 
@@ -57,7 +57,7 @@ public class TrafficLightControllerTest {
     void changeLightWithOkHttpStatus() throws Exception {
         when(trafficLightService.changeLight(INTERSECTION_TEST_NAME, Direction.NORTH, LightColor.GREEN)).thenReturn(buildIntersectionDTO());
 
-        mockMvc.perform(MockMvcRequestBuilders.post(BASE_API_URL_WITH_INTERSECTION + "/changelight"))
+        mockMvc.perform(MockMvcRequestBuilders.post(BASE_API_URL_WITH_INTERSECTION + "/changelight?direction=NORTH&color=GREEN"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idName").value(INTERSECTION_TEST_NAME))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.autoRunStatus").value(IntersectionAutoRunStatus.RUNNING.name()))
@@ -111,7 +111,7 @@ public class TrafficLightControllerTest {
         when(trafficLightService.getLightHistory(INTERSECTION_TEST_NAME, 0, 5))
                 .thenReturn(new LightHistoryPageDTO(0, 5, 4, 20L, buildLightHistoryDTO()));
 
-        mockMvc.perform(MockMvcRequestBuilders.get(BASE_API_URL_WITH_INTERSECTION + "/lighthistory"))
+        mockMvc.perform(MockMvcRequestBuilders.get(BASE_API_URL_WITH_INTERSECTION + "/lighthistory?pageNumber=0&pageSize=5"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.totalPages").isNumber())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.totalElements").isNumber())

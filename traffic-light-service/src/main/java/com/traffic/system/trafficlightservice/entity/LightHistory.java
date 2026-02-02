@@ -31,7 +31,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
-public class LightHistory extends BaseEntity {
+public class LightHistory extends BaseEntityCreate {
 
     @Id
     @GeneratedValue(strategy = IDENTITY)

@@ -57,6 +57,7 @@ public class TrafficLightServiceRepoIntegrationTest extends BaseIntegrationTest 
     @Test
     void changeLightAndValidate() throws TrafficLightServiceException {
 
+        trafficLightService.createIntersection(idName);
         trafficLightService.changeLight(idName, Direction.SOUTH, LightColor.GREEN);         // service call
 
         Optional<Intersection> intersectionDb = intersectionRepository.findByIdName(idName);  // repository call

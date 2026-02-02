@@ -27,6 +27,7 @@ public class IntersectionRepositoryTest extends BaseMySqlJpaTest {
     private IntersectionRepository intersectionRepository;
 
     private static final String INTERSECTION_TEST_NAME = "MAIN-ROAD-INTSEC-";
+    private static final String ADMIN_USER = "Admin";
 
     @Test
     void saveIntersection() {
@@ -46,9 +47,7 @@ public class IntersectionRepositoryTest extends BaseMySqlJpaTest {
 
         intersectionRepository.save(createTestIntersection(idName));
 
-        Boolean intersectionExists = intersectionRepository.existsByIdName(idName);
-
-        assertTrue(intersectionExists);
+        assertTrue(intersectionRepository.existsByIdName(idName));
     }
 
     @Test
@@ -66,13 +65,34 @@ public class IntersectionRepositoryTest extends BaseMySqlJpaTest {
     }
 
     private Intersection createTestIntersection(String idName) {
+        Intersection intersection = new Intersection();
+        intersection.setIdName(idName);
+        intersection.setAutoRunStatus(IntersectionAutoRunStatus.RUNNING);
         List<TrafficLight> trafficLights = Arrays.asList(
                 new TrafficLight(Direction.NORTH, LightColor.GREEN, LocalDateTime.now()),
                 new TrafficLight(Direction.SOUTH, LightColor.RED, LocalDateTime.now()),
                 new TrafficLight(Direction.EAST, LightColor.RED, LocalDateTime.now()),
                 new TrafficLight(Direction.WEST, LightColor.RED, LocalDateTime.now()));
+        for (TrafficLight trafficLight : trafficLights) {
+            setSystemAttributes(trafficLight);
+            trafficLight.setIntersection(intersection);
+        }
 
-        return new Intersection(idName, IntersectionAutoRunStatus.RUNNING, trafficLights);
+        intersection.setTrafficLights(trafficLights);
+        setSystemAttributes(intersection);
+        return intersection;
+    }
+
+    private void setSystemAttributes(Intersection intersection) {
+        intersection.setCreatedBy(ADMIN_USER);
+        intersection.setCreatedAt(LocalDateTime.now());
+        intersection.setVersion(0);
+    }
+
+    private void setSystemAttributes(TrafficLight trafficLight) {
+        trafficLight.setCreatedBy(ADMIN_USER);
+        trafficLight.setCreatedAt(LocalDateTime.now());
+        trafficLight.setVersion(0);
     }
 
     private String formatCurrentDateTime() {

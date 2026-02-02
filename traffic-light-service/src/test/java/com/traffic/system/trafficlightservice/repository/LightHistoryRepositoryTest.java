@@ -23,6 +23,7 @@ public class LightHistoryRepositoryTest extends BaseMySqlJpaTest {
     private LightHistoryRepository lightHistoryRepository;
 
     private static final String INTERSECTION_TEST_NAME = "MAIN-ROAD-INTSEC-";
+    private static final String ADMIN_USER = "Admin";
 
     @Test
     void saveLightHistory() {
@@ -52,7 +53,11 @@ public class LightHistoryRepositoryTest extends BaseMySqlJpaTest {
     }
 
     private LightHistory createTestLightHistory(String idName) {
-        return new LightHistory(Direction.NORTH, LightColor.GREEN, LocalDateTime.now(), idName, IntersectionAutoRunStatus.RUNNING);
+        LightHistory lightHistory = new LightHistory(Direction.NORTH, LightColor.GREEN, LocalDateTime.now(), idName, IntersectionAutoRunStatus.RUNNING);
+        lightHistory.setCreatedBy(ADMIN_USER);
+        lightHistory.setCreatedAt(LocalDateTime.now());
+        lightHistory.setVersion(0);
+        return lightHistory;
     }
 
     private String formatCurrentDateTime() {

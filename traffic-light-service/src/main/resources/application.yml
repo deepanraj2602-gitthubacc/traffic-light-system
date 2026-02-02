@@ -16,10 +16,6 @@ server:
 spring:
   application:
     name: ${app.service.name}
-  security:
-    user:
-      name: admin
-      password: admin
   config:
     import: optional:configserver:http://localhost:8888/
   datasource:
@@ -31,11 +27,12 @@ spring:
     password: admin
   flyway:
     enabled: true
+    baseline-version: 0
     baseline-on-migrate: true
     validate-on-migrate: true
-    clean-disabled: true
     locations: classpath:db/migration
     schemas: ${app.service.name}
+    table: flyway_script_history
     encoding: UTF-8
     connectRetries: 3
   jpa:
@@ -64,9 +61,13 @@ springdoc:
   api-docs:
     path: /api-docs
     version: OPENAPI_3_1
+    enabled: true
   swagger-ui:
     path: /swagger-ui.html
+    enabled: true
 
 logging:
   level:
-    root: info
+    root: debug
+    org:
+      flywaydb: debug

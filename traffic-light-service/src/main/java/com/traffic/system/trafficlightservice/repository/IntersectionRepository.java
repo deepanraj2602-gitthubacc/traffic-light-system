@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface IntersectionRepository extends JpaRepository<Intersection, Integer> {
 
-    Boolean existsByIdName(String idName);
+    boolean existsByIdName(String idName);
 
     Optional<Intersection> findByIdName(String idName);
 }

@@ -3,7 +3,6 @@ package com.traffic.system.trafficlightservice.service;
 
 
 import com.traffic.system.trafficlightservice.dto.IntersectionDTO;
-import com.traffic.system.trafficlightservice.dto.LightHistoryDTO;
 import com.traffic.system.trafficlightservice.dto.LightHistoryPageDTO;
 import com.traffic.system.trafficlightservice.dto.TrafficLightDTO;
 import com.traffic.system.trafficlightservice.entity.Intersection;
@@ -30,7 +29,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +67,7 @@ public class TrafficLightServiceTest {
     private static final String INTERSECTION_TEST_NAME_2 = "MAIN-ROAD-INTSEC-2";
     private static final String INTERSECTION_ALREADY_EXISTS = "Intersection already exists";
     private static final String INTERSECTION_NOT_FOUND = "Intersection not found";
+    private static final String INTERSECTION_PAUSED = "Intersection paused";
     private static final String CONFLICT_DIRECTION_NO_GREEN_ALLOWED = "Conflict direction, no green allowed";
 
     @BeforeEach
@@ -186,6 +185,7 @@ public class TrafficLightServiceTest {
     void changeLightToGreenSuccessfulForTwoNoConflictDirections() throws TrafficLightServiceException {
         when(intersectionRepository.findByIdName(INTERSECTION_TEST_NAME)).thenReturn(Optional.of(intersection));
         setTrafficLight(Direction.NORTH, LightColor.GREEN);
+        setTrafficLight(Direction.SOUTH, LightColor.GREEN);
         when(intersectionRepository.save(any(Intersection.class))).thenReturn(intersection);
         when(intersectionMapper.toDtoWithTrafficLights(any(Intersection.class))).thenReturn(buildIntersectionDTO());
 
@@ -213,7 +213,7 @@ public class TrafficLightServiceTest {
         when(intersectionRepository.save(any(Intersection.class))).thenReturn(intersection);
         when(intersectionMapper.toDtoWithTrafficLights(any(Intersection.class))).thenReturn(buildIntersectionDTO());
 
-        ArgumentCaptor<LightHistory> lightHistoryArgCaptor = ArgumentCaptor.forClass(LightHistory.class);
+        var lightHistoryArgCaptor = ArgumentCaptor.forClass(LightHistory.class);
 
         IntersectionDTO resultIntersectionDto = trafficLightService.changeLight(INTERSECTION_TEST_NAME, Direction.SOUTH, LightColor.GREEN);
 
@@ -259,6 +259,18 @@ public class TrafficLightServiceTest {
     }
 
     @Test
+    void changeLightWhilePausedThrowingException() {
+        when(intersectionRepository.findByIdName(INTERSECTION_TEST_NAME)).thenReturn(Optional.of(intersection));
+        intersection.setAutoRunStatus(IntersectionAutoRunStatus.PAUSED);
+
+        TrafficLightServiceException exception = assertThrows(TrafficLightServiceException.class,
+                () -> trafficLightService.changeLight(INTERSECTION_TEST_NAME, Direction.SOUTH, LightColor.YELLOW));
+
+        assertEquals(INTERSECTION_PAUSED, exception.getMessage());
+        verifyNoInteractions(intersectionMapper, lightHistoryRepository);
+    }
+
+    @Test
     void updateIntersectionStateToPausedSuccessful() throws TrafficLightServiceException {
         IntersectionDTO intersectionDto = new IntersectionDTO(INTERSECTION_TEST_NAME, IntersectionAutoRunStatus.PAUSED.name());
         when(intersectionRepository.findByIdName(INTERSECTION_TEST_NAME)).thenReturn(Optional.of(intersection));
@@ -280,7 +292,7 @@ public class TrafficLightServiceTest {
 
     @Test
     void updateIntersectionStateToResumedSuccessful() throws TrafficLightServiceException {
-        IntersectionDTO intersectionDto = new IntersectionDTO(INTERSECTION_TEST_NAME, IntersectionAutoRunStatus.PAUSED.name());
+        IntersectionDTO intersectionDto = new IntersectionDTO(INTERSECTION_TEST_NAME, IntersectionAutoRunStatus.RUNNING.name());
         when(intersectionRepository.findByIdName(INTERSECTION_TEST_NAME)).thenReturn(Optional.of(intersection));
         intersection.setAutoRunStatus(IntersectionAutoRunStatus.RUNNING);
         when(intersectionRepository.save(any(Intersection.class))).thenReturn(intersection);
@@ -346,7 +358,7 @@ public class TrafficLightServiceTest {
     }
 
     private List<TrafficLightDTO> buildTrafficLightDTO() {
-        List<TrafficLightDTO> trafficLightDtoList = new ArrayList<>();
+        List<TrafficLightDTO> trafficLightDtoList = new java.util.ArrayList<>();
         for (TrafficLight light : intersection.getTrafficLights()) {
             trafficLightDtoList.add(TrafficLightDTO.builder()
                     .direction(light.getDirection().name())
@@ -366,10 +378,10 @@ public class TrafficLightServiceTest {
                 .build();
     }
 
-    private List<LightHistoryDTO> buildLightHistoryDTO(List<LightHistory> lightHistories) {
-        List<LightHistoryDTO> lightHistoryDtoList = new ArrayList<>();
+    private List<com.traffic.system.trafficlightservice.dto.LightHistoryDTO> buildLightHistoryDTO(List<LightHistory> lightHistories) {
+        List<com.traffic.system.trafficlightservice.dto.LightHistoryDTO> lightHistoryDtoList = new java.util.ArrayList<>();
         for (LightHistory lightHistory : lightHistories) {
-            lightHistoryDtoList.add(LightHistoryDTO.builder()
+            lightHistoryDtoList.add(com.traffic.system.trafficlightservice.dto.LightHistoryDTO.builder()
                     .intersectionIdName(lightHistory.getIntersectionIdName())
                     .intersectionAutoRunStatus(lightHistory.getIntersectionAutoRunStatus().name())
                     .direction(lightHistory.getDirection().name())

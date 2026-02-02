@@ -38,7 +38,7 @@ public class TrafficLightControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     void createIntersection() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/intersections/" + idName))
+        mockMvc.perform(MockMvcRequestBuilders.post("/v1/intersections/" + idName))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idName").value(idName));
     }
@@ -46,9 +46,10 @@ public class TrafficLightControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     void changeLight() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/intersections/" + idName + "/changelight"))
+        createIntersection();
+        mockMvc.perform(MockMvcRequestBuilders.post("/v1/intersections/" + idName + "/changelight?direction=NORTH&color=GREEN"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.idName").value(INTERSECTION_TEST_NAME))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.idName").value(idName))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.trafficLights").isNotEmpty());
     }
 
