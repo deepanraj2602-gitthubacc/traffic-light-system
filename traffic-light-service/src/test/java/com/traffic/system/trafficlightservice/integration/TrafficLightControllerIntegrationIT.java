@@ -1,7 +1,6 @@
 
 package com.traffic.system.trafficlightservice.integration;
 
-import com.traffic.system.trafficlightservice.config.BaseIntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class TrafficLightControllerIntegrationTest extends BaseIntegrationTest {
+public class TrafficLightControllerIntegrationIT extends com.traffic.system.trafficlightservice.config.BaseIT {
 
     @Autowired
     private MockMvc mockMvc;

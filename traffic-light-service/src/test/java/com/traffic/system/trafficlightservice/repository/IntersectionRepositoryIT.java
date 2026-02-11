@@ -1,7 +1,6 @@
 
 package com.traffic.system.trafficlightservice.repository;
 
-import com.traffic.system.trafficlightservice.config.BaseMySqlJpaTest;
 import com.traffic.system.trafficlightservice.entity.Intersection;
 import com.traffic.system.trafficlightservice.entity.TrafficLight;
 import com.traffic.system.trafficlightservice.enums.Direction;
@@ -21,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class IntersectionRepositoryTest extends BaseMySqlJpaTest {
+public class IntersectionRepositoryIT extends com.traffic.system.trafficlightservice.config.BaseMySqlJpaIT {
 
     @Autowired
     private IntersectionRepository intersectionRepository;

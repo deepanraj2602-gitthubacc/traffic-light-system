@@ -1,7 +1,6 @@
 
 package com.traffic.system.trafficlightservice.integration;
 
-import com.traffic.system.trafficlightservice.config.BaseIntegrationTest;
 import com.traffic.system.trafficlightservice.entity.Intersection;
 import com.traffic.system.trafficlightservice.entity.TrafficLight;
 import com.traffic.system.trafficlightservice.enums.Direction;
@@ -24,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class TrafficLightServiceRepoIntegrationTest extends BaseIntegrationTest {
+public class TrafficLightServiceRepoIntegrationIT extends com.traffic.system.trafficlightservice.config.BaseIT {
 
     @Autowired
     private TrafficLightService trafficLightService;

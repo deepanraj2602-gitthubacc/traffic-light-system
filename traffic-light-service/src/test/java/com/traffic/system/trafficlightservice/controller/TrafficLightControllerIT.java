@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(TrafficLightController.class)
-public class TrafficLightControllerTest {
+public class TrafficLightControllerIT {
 
     @Autowired
     private MockMvc mockMvc;
@@ -109,7 +109,12 @@ public class TrafficLightControllerTest {
     @Test
     void getLightHistoryWithOkHttpStatus() throws Exception {
         when(trafficLightService.getLightHistory(INTERSECTION_TEST_NAME, 0, 5))
-                .thenReturn(new LightHistoryPageDTO(0, 5, 4, 20L, buildLightHistoryDTO()));
+                .thenReturn(LightHistoryPageDTO.builder()
+                        .pageNumber(0)
+                        .pageSize(5)
+                        .totalPages(4)
+                        .totalElements(20L)
+                        .lightHistories(buildLightHistoryDTO()).build());
 
         mockMvc.perform(MockMvcRequestBuilders.get(BASE_API_URL_WITH_INTERSECTION + "/lighthistory?pageNumber=0&pageSize=5"))
                 .andExpect(MockMvcResultMatchers.status().isOk())

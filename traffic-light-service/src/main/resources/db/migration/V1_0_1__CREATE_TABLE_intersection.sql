@@ -11,3 +11,7 @@ CREATE TABLE IF NOT EXISTS intersection (
     version INT NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
     );
+
+-- id & id_name column index already created as table created
+-- CREATE INDEX auto_run_status
+CREATE INDEX indx_auto_run_status ON intersection (auto_run_status);

@@ -7,6 +7,13 @@ app:
   database:
     host: 127.0.0.1
     port: 3306
+  scheduler:
+    bgThreadPeriod: 30000
+    lightInterim: 5
+    threadPoolCount: 5
+    task:
+      initialDelay: 3
+      period: 20
 
 server:
   port: ${app.server.port}

@@ -68,7 +68,7 @@ public class TrafficLightController {
                                                        @NotBlank(message = "Direction is mandatory") @RequestParam String direction,
                                                        @NotBlank(message = "Signal Color is mandatory") @RequestParam String color)
             throws TrafficLightServiceException {
-        return new ResponseEntity<>(trafficLightService.changeLight(idName, Direction.getEnum(direction), LightColor.getEnum(color)), HttpStatus.OK);
+        return new ResponseEntity<>(trafficLightService.changeLight(idName, Direction.getEnumType(direction), LightColor.getEnumType(color)), HttpStatus.OK);
     }
 
     @Operation(summary = "Update intersection state",
@@ -82,7 +82,7 @@ public class TrafficLightController {
     public ResponseEntity<IntersectionDTO> updateIntersectionState(@NotBlank(message = "Intersection ID is mandatory") @PathVariable("id") String idName,
                                                                    @NotBlank(message = "State is mandatory") @PathVariable String state)
             throws TrafficLightServiceException {
-        return new ResponseEntity<>(trafficLightService.updateIntersectionState(idName, IntersectionAutoRunStatus.getEnum(state)), HttpStatus.OK);
+        return new ResponseEntity<>(trafficLightService.updateIntersectionState(idName, IntersectionAutoRunStatus.getEnumType(state)), HttpStatus.OK);
     }
 
     @Operation(summary = "Get intersection light state",

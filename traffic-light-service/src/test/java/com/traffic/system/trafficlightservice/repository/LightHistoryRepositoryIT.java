@@ -1,7 +1,6 @@
 
 package com.traffic.system.trafficlightservice.repository;
 
-import com.traffic.system.trafficlightservice.config.BaseMySqlJpaTest;
 import com.traffic.system.trafficlightservice.entity.LightHistory;
 import com.traffic.system.trafficlightservice.enums.Direction;
 import com.traffic.system.trafficlightservice.enums.IntersectionAutoRunStatus;
@@ -17,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class LightHistoryRepositoryTest extends BaseMySqlJpaTest {
+public class LightHistoryRepositoryIT extends com.traffic.system.trafficlightservice.config.BaseMySqlJpaIT {
 
     @Autowired
     private LightHistoryRepository lightHistoryRepository;

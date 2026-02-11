@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS light_history (
     version INT NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
     );
+
+-- CREATE INDEX intersection_id_name
+CREATE INDEX indx_intersection_id_name ON light_history (intersection_id_name);

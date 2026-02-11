@@ -27,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -327,8 +328,19 @@ public class TrafficLightServiceTest {
     }
 
     @Test
+    void getIntersectionStateIntersectionNotFoundThrowingException() {
+        when(intersectionRepository.findByIdName(INTERSECTION_TEST_NAME_2)).thenReturn(Optional.empty());
+
+        TrafficLightServiceException exception = assertThrows(TrafficLightServiceException.class,
+                () -> trafficLightService.getIntersectionState(INTERSECTION_TEST_NAME_2));
+
+        assertEquals(INTERSECTION_NOT_FOUND, exception.getMessage());
+        verifyNoInteractions(intersectionMapper);
+    }
+
+    @Test
     void getLightHistorySuccessful() throws TrafficLightServiceException {
-        Pageable pageable = PageRequest.of(0, 5);
+        Pageable pageable = PageRequest.of(0, 5, Sort.Direction.DESC, "createdAt");
         Page<LightHistory> lightHistoryPage = new PageImpl<>(lightHistories, pageable, 10);
         when(lightHistoryRepository.findByIntersectionIdName(INTERSECTION_TEST_NAME, pageable))
                 .thenReturn(lightHistoryPage);
@@ -336,8 +348,8 @@ public class TrafficLightServiceTest {
         LightHistoryPageDTO resultLightHistoryPageDto = trafficLightService.getLightHistory(INTERSECTION_TEST_NAME, 0, 5);
 
         assertNotNull(resultLightHistoryPageDto);
-        assertFalse(resultLightHistoryPageDto.getLightHistories().isEmpty());
-        assertEquals(INTERSECTION_TEST_NAME, resultLightHistoryPageDto.getLightHistories().getFirst().getIntersectionIdName());
+        assertFalse(resultLightHistoryPageDto.lightHistories().isEmpty());
+        assertEquals(INTERSECTION_TEST_NAME, resultLightHistoryPageDto.lightHistories().getFirst().intersectionIdName());
         verify(lightHistoryRepository, times(1)).findByIntersectionIdName(INTERSECTION_TEST_NAME, pageable);
     }
 

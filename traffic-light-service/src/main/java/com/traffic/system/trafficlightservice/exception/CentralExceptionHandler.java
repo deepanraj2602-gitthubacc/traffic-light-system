@@ -29,13 +29,13 @@ public class CentralExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = TrafficLightServiceException.class)
     public ResponseEntity<ErrorResponse> handleTrafficLightServiceException(TrafficLightServiceException exception) {
-        log.error(exception.getMessage(), exception);
+        log.error("TrafficLightServiceException occurred: {}", exception.getMessage(), exception);
         return returnResponse(exception.getMessage(), null, INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(value = {RuntimeException.class, Exception.class})
     public ResponseEntity<ErrorResponse> handleException(Exception exception) {
-        log.error(exception.getMessage(), exception);
+        log.error("Exception occurred: {}", exception.getMessage(), exception);
         return returnResponse("Unknown error, please contact the administrator", null, INTERNAL_SERVER_ERROR);
     }
 

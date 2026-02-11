@@ -10,6 +10,6 @@ import org.springframework.test.context.ActiveProfiles;
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = Replace.NONE)
-public abstract class BaseMySqlJpaTest {
+public abstract class BaseMySqlJpaIT {
 
 }

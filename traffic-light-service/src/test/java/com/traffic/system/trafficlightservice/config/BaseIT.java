@@ -10,6 +10,6 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional
-public abstract class BaseIntegrationTest {
+public abstract class BaseIT {
 
 }

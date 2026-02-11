@@ -19,9 +19,12 @@ import com.traffic.system.trafficlightservice.service.TrafficLightService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.XSlf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -30,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -37,6 +41,9 @@ import java.util.concurrent.locks.ReentrantLock;
 @Service
 @RequiredArgsConstructor
 public class TrafficLightServiceImpl implements TrafficLightService {
+
+    @Value("${app.scheduler.lightInterim}")
+    private Integer lightInterim;
 
     @NonNull
     private IntersectionRepository intersectionRepository;
@@ -51,7 +58,7 @@ public class TrafficLightServiceImpl implements TrafficLightService {
 
     private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public IntersectionDTO createIntersection(String idName) throws TrafficLightServiceException {
         IntersectionDTO intersectionDto = null;
 
@@ -72,7 +79,7 @@ public class TrafficLightServiceImpl implements TrafficLightService {
         return intersectionDto;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public IntersectionDTO changeLight(String idName, Direction direction, LightColor color) throws TrafficLightServiceException {
         IntersectionDTO intersectionDto = null;
 
@@ -104,7 +111,7 @@ public class TrafficLightServiceImpl implements TrafficLightService {
             Intersection intersectionSaved = intersectionRepository.save(intersection);
 
             if (Objects.nonNull(intersectionSaved) && Objects.nonNull(trafficLightUpdated)) {
-                saveLightHistory(intersectionSaved, trafficLightUpdated);
+                createLightHistory(intersectionSaved, trafficLightUpdated);
                 intersectionDto = intersectionMapper.toDtoWithTrafficLights(intersectionSaved);
             }
         } catch (Exception exception) {
@@ -116,7 +123,38 @@ public class TrafficLightServiceImpl implements TrafficLightService {
         return intersectionDto;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public IntersectionDTO changeLightToNextDirection(String idName) throws TrafficLightServiceException {
+        IntersectionDTO intersectionDto;
+
+        try {
+            Intersection intersection = intersectionRepository.findByIdName(idName)
+                    .orElseThrow(() -> new TrafficLightServiceException("Intersection not found"));
+            Direction nextGreenDirection = findNextDirection(intersection);
+            Direction currentGreenDirection = Optional.ofNullable(findTrafficLightByColor(intersection, LightColor.GREEN))
+                    .map(TrafficLight::getDirection).orElse(Direction.NORTH);
+
+            if (nextGreenDirection == currentGreenDirection) {
+                // When next & current direction are equal, only change green light to current direction
+                intersectionDto = changeLight(intersection.getIdName(), currentGreenDirection, LightColor.GREEN);
+            } else {
+                // When next & current direction are not equal,
+                // change yellow & red lights to current direction
+                changeLight(intersection.getIdName(), currentGreenDirection, LightColor.YELLOW);
+                invokeLightInterval();
+                changeLight(intersection.getIdName(), currentGreenDirection, LightColor.RED);
+                invokeLightInterval();
+                // change green light to next direction
+                intersectionDto = changeLight(intersection.getIdName(), nextGreenDirection, LightColor.GREEN);
+            }
+        } catch (Exception exception) {
+            log.error(exception.getMessage(), exception);
+            throw new TrafficLightServiceException(exception.getMessage(), exception);
+        }
+        return intersectionDto;
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public IntersectionDTO updateIntersectionState(String idName, IntersectionAutoRunStatus autoRunStatus) throws TrafficLightServiceException {
         IntersectionDTO intersectionDto = null;
 
@@ -134,7 +172,7 @@ public class TrafficLightServiceImpl implements TrafficLightService {
             Intersection intersectionSaved = intersectionRepository.save(intersection);
 
             if (Objects.nonNull(intersectionSaved)) {
-                saveLightHistory(intersectionSaved, new TrafficLight(null, null, null));
+                createLightHistory(intersectionSaved, new TrafficLight(null, null, null));
                 intersectionDto = intersectionMapper.toDto(intersectionSaved);
             }
         } catch (Exception exception) {
@@ -144,7 +182,7 @@ public class TrafficLightServiceImpl implements TrafficLightService {
         return intersectionDto;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, timeout = 15)
     public IntersectionDTO getIntersectionState(String idName) throws TrafficLightServiceException {
         IntersectionDTO intersectionDto = null;
 
@@ -162,23 +200,29 @@ public class TrafficLightServiceImpl implements TrafficLightService {
         return intersectionDto;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, timeout = 25)
     public LightHistoryPageDTO getLightHistory(String idName, Integer pageNumber, Integer pageSize) throws TrafficLightServiceException {
         LightHistoryPageDTO lightHistoryPageDto = null;
 
         try {
-            Page<LightHistory> lightHistoryPage = lightHistoryRepository.findByIntersectionIdName(idName, PageRequest.of(pageNumber, pageSize));
+            Page<LightHistory> lightHistoryPage = lightHistoryRepository.findByIntersectionIdName(idName,
+                    PageRequest.of(pageNumber, pageSize, Sort.Direction.DESC, "createdAt"));
 
             if (Objects.nonNull(lightHistoryPage)) {
                 List<LightHistoryDTO> lightHistories = new ArrayList<>();
-                for (LightHistory lightHistory : lightHistoryPage) {
-                    lightHistories.add(LightHistoryDTO.builder().intersectionIdName(lightHistory.getIntersectionIdName())
-                            .intersectionAutoRunStatus(lightHistory.getIntersectionAutoRunStatus().name())
-                            .direction(Objects.nonNull(lightHistory.getDirection()) ? lightHistory.getDirection().name() : null)
-                            .color(Objects.nonNull(lightHistory.getColor()) ? lightHistory.getColor().name() : null)
-                            .changedAt(Objects.nonNull(lightHistory.getChangedAt()) ? lightHistory.getChangedAt() : null).build());
-                }
-                lightHistoryPageDto = LightHistoryPageDTO.builder().pageNumber(lightHistoryPage.getNumber())
+
+                lightHistoryPage.stream().filter(Objects::nonNull)
+                        .forEachOrdered(lightHistory ->
+                                lightHistories.add(LightHistoryDTO.builder()
+                                        .color(LightColor.getEnumString(lightHistory.getColor()))
+                                        .direction(Direction.getEnumString(lightHistory.getDirection()))
+                                        .changedAt(Optional.of(lightHistory.getChangedAt()).orElse(null))
+                                        .intersectionIdName(Optional.of(lightHistory.getIntersectionIdName()).orElse(null))
+                                        .intersectionAutoRunStatus(IntersectionAutoRunStatus.getEnumString(lightHistory.getIntersectionAutoRunStatus()))
+                                        .build()));
+
+                lightHistoryPageDto = com.traffic.system.trafficlightservice.dto.LightHistoryPageDTO.builder()
+                        .pageNumber(lightHistoryPage.getNumber())
                         .pageSize(lightHistoryPage.getContent().size())
                         .totalPages(lightHistoryPage.getTotalPages())
                         .totalElements(lightHistoryPage.getTotalElements())
@@ -191,7 +235,32 @@ public class TrafficLightServiceImpl implements TrafficLightService {
         return lightHistoryPageDto;
     }
 
-    private void saveLightHistory(Intersection intersection, TrafficLight trafficLight) {
+    private Direction findNextDirection(Intersection intersection) {
+        Direction nextTrafficLight = Direction.NORTH;
+        if (Objects.nonNull(intersection) && intersection.getAutoRunStatus() == IntersectionAutoRunStatus.RUNNING
+                && Objects.nonNull(intersection.getTrafficLights())) {
+
+            TrafficLight trafficLight = findTrafficLightByColor(intersection, LightColor.GREEN);
+            if (Objects.nonNull(trafficLight)) {
+                nextTrafficLight = switch (trafficLight.getDirection()) {
+                    // Light change direction logic is first,
+                    // NORTH -> EAST -> SOUTH -> WEST -> again NORTH like clock-wise direction implemented.,
+                    case Direction.NORTH -> Direction.EAST;
+                    case Direction.EAST -> Direction.SOUTH;
+                    case Direction.SOUTH -> Direction.WEST;
+                    case Direction.WEST -> Direction.NORTH;
+                };
+            }
+        }
+        return nextTrafficLight;
+    }
+
+    private TrafficLight findTrafficLightByColor(Intersection intersection, LightColor color) {
+        return intersection.getTrafficLights().stream().filter(light -> Objects.nonNull(light)
+                && light.getColor() == color).findFirst().orElse(null);
+    }
+
+    private void createLightHistory(Intersection intersection, TrafficLight trafficLight) {
         LightHistory lightHistory = LightHistory.builder().intersectionIdName(intersection.getIdName())
                 .intersectionAutoRunStatus(intersection.getAutoRunStatus())
                 .direction(trafficLight.getDirection())
@@ -258,5 +327,14 @@ public class TrafficLightServiceImpl implements TrafficLightService {
         lightHistory.setCreatedBy(ADMIN_USER);
         lightHistory.setCreatedAt(LocalDateTime.now());
         lightHistory.setVersion(0);
+    }
+
+    private void invokeLightInterval() throws TrafficLightServiceException {
+        try {
+            Thread.sleep(lightInterim * 1000);
+        } catch (InterruptedException exception) {
+            log.error(exception.getMessage(), exception);
+            throw new TrafficLightServiceException(exception.getMessage(), exception);
+        }
     }
 }

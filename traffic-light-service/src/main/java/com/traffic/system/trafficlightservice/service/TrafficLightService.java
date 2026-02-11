@@ -15,6 +15,8 @@ public interface TrafficLightService {
 
     IntersectionDTO changeLight(String idName, Direction direction, LightColor color) throws TrafficLightServiceException;
 
+    IntersectionDTO changeLightToNextDirection(String idName) throws TrafficLightServiceException;
+
     IntersectionDTO updateIntersectionState(String idName, IntersectionAutoRunStatus autoRunStatus) throws TrafficLightServiceException;
 
     IntersectionDTO getIntersectionState(String idName) throws TrafficLightServiceException;
